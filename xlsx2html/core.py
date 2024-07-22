@@ -9,12 +9,12 @@ from openpyxl.chart.shapes import GraphicalProperties
 from openpyxl.drawing.image import Image
 from openpyxl.drawing.spreadsheet_drawing import AnchorMarker
 from openpyxl.styles.colors import COLOR_INDEX, aRGB_REGEX
-from openpyxl.utils import rows_from_range, column_index_from_string, units
+from openpyxl.utils import column_index_from_string, rows_from_range, units
 from openpyxl.utils.escape import unescape
 from openpyxl.worksheet.worksheet import Worksheet
 
 from xlsx2html.compat import OPENPYXL_24
-from xlsx2html.constants.border import DEFAULT_BORDER_STYLE, BORDER_STYLES
+from xlsx2html.constants.border import BORDER_STYLES, DEFAULT_BORDER_STYLE
 from xlsx2html.format import format_cell
 from xlsx2html.utils.image import bytes_to_datauri
 
@@ -100,6 +100,11 @@ def get_styles_from_cell(cell, merged_cell_map=None, default_cell_border="none")
         h_styles["text-align"] = cell.alignment.horizontal
     if cell.alignment.vertical:
         h_styles["vertical-align"] = cell.alignment.vertical
+    if cell.alignment.textRotation == 255:
+        h_styles["writing-mode"] = "vertical-lr"
+    if not cell.alignment.wrapText:
+        h_styles["white-space"] = "nowrap"
+        h_styles["overflow"] = "visible"
 
     with contextlib.suppress(AttributeError):
         if cell.fill.patternType == "solid":
@@ -265,9 +270,12 @@ def worksheet_to_data(ws, locale=None, fs=None, default_cell_border="none"):
 
 
 def render_table(data, append_headers, append_lineno):
+    total_col_width = sum(
+        [float(col["style"]["width"].replace("px", "")) for col in data["cols"]]
+    )
     html = [
         "<table  "
-        'style="border-collapse: collapse" '
+        f'style="border-collapse: collapse;table-layout: fixed; width: {total_col_width}px" '
         'border="0" '
         'cellspacing="0" '
         'cellpadding="0">'
