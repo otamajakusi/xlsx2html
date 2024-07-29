@@ -102,7 +102,9 @@ def get_styles_from_cell(cell, merged_cell_map=None, default_cell_border="none")
         h_styles["vertical-align"] = cell.alignment.vertical
     if cell.alignment.textRotation == 255:
         h_styles["writing-mode"] = "vertical-lr"
-    if not cell.alignment.wrapText:
+    if cell.alignment.wrapText:
+        h_styles["overflow-wrap"] = "break-word"
+    else:
         h_styles["white-space"] = "nowrap"
         h_styles["overflow"] = "visible"
 
